@@ -1,0 +1,34 @@
+name: Verify published site
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Pages propagation
+        run: sleep 15
+      - name: Check root page
+        run: |
+          URL="https://zrh345980283-a11y.github.io/zam/"
+          CODE=$(curl -sSL -o /dev/null -w "%{http_code}" "$URL")
+          echo "Root status: $CODE"
+          if [ "$CODE" != "200" ]; then
+            echo "Root page not ready"; exit 1
+          fi
+      - name: Check videos
+        run: |
+          ROOT="https://zrh345980283-a11y.github.io/zam"
+          V1="$ROOT/video/细胞核的分布及数量.mp4"
+          V2="$ROOT/video/NB演示伞藻嫁接及核移植实验.mp4"
+          for u in "$V1" "$V2"; do
+            CODE=$(curl -sSLI -o /dev/null -w "%{http_code}" "$u")
+            echo "Video $u status: $CODE"
+            case "$CODE" in
+              200|206) ;; 
+              *) echo "Video not accessible: $u"; exit 1;;
+            esac
+          done
