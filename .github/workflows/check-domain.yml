@@ -1,0 +1,33 @@
+name: Verify custom domain (hexuetong.asia) HTTPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for DNS/HTTPS propagation
+        run: sleep 20
+      - name: Check HTTPS root
+        run: |
+          URL="https://hexuetong.asia/"
+          CODE=$(curl -sSL -o /dev/null -w "%{http_code}" "$URL")
+          echo "Root HTTPS status: $CODE"
+          if [ "$CODE" != "200" ]; then
+            echo "Root page (HTTPS) not ready"; exit 1
+          fi
+      - name: Check videos over HTTPS
+        run: |
+          V1="https://hexuetong.asia/video/细胞核的分布及数量.mp4"
+          V2="https://hexuetong.asia/video/NB演示伞藻嫁接及核移植实验.mp4"
+          for u in "$V1" "$V2"; do
+            CODE=$(curl -sSLI -o /dev/null -w "%{http_code}" "$u")
+            echo "Video $u status: $CODE"
+            case "$CODE" in
+              200|206) ;;
+              *) echo "Video not accessible over HTTPS: $u"; exit 1;;
+            esac
+          done
