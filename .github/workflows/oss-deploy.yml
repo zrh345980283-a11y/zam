@@ -1,0 +1,52 @@
+name: Deploy to Aliyun OSS (hexuetong-oss)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup ossutil
+        run: |
+          curl -sSL -o ossutil64 https://gosspublic.alicdn.com/ossutil/1.7.16/ossutil64
+          chmod +x ossutil64
+
+      - name: Configure ossutil
+        env:
+          ALIYUN_ACCESS_KEY_ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+          ALIYUN_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+          OSS_ENDPOINT: ${{ secrets.OSS_ENDPOINT }}
+        run: |
+          ENDPOINT="${OSS_ENDPOINT}"
+          if [ -z "$ENDPOINT" ]; then
+            ENDPOINT="oss-ap-southeast-1.aliyuncs.com"
+          fi
+          ./ossutil64 config -e "$ENDPOINT" -i "$ALIYUN_ACCESS_KEY_ID" -k "$ALIYUN_ACCESS_KEY_SECRET" -L CH
+          echo "Using endpoint: $ENDPOINT"
+
+      - name: Upload site to OSS
+        env:
+          OSS_BUCKET: hexuetong-oss
+        run: |
+          ./ossutil64 cp -r . "oss://$OSS_BUCKET/" \
+            --exclude .git --exclude .github --exclude node_modules --exclude .vite
+
+      - name: Configure bucket website and ACL
+        env:
+          OSS_BUCKET: hexuetong-oss
+        run: |
+          ./ossutil64 set-bucket-website "oss://$OSS_BUCKET" index.html 404.html || true
+          ./ossutil64 set-bucket-acl "oss://$OSS_BUCKET" public-read
+
+      - name: Ensure video content types
+        env:
+          OSS_BUCKET: hexuetong-oss
+        run: |
+          ./ossutil64 set-object-meta "oss://$OSS_BUCKET/video/细胞核的分布及数量.mp4" "Content-Type:video/mp4" || true
+          ./ossutil64 set-object-meta "oss://$OSS_BUCKET/video/NB演示伞藻嫁接及核移植实验.mp4" "Content-Type:video/mp4" || true
