@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>核学通</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="https://unpkg.com/docx@8.1.2/build/index.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo">核</div>
+      <div class="title">核学通</div>
+    </div>
+    <nav id="top-nav" class="top-nav hidden">
+      <button data-nav="student" class="nav-btn">学生版</button>
+      <button data-nav="teacher" class="nav-btn">教师版</button>
+      <div class="spacer"></div>
+      <button id="logout" class="nav-link">退出</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="login-section" class="card login-card">
+      <div class="decor-flower" aria-hidden="true"></div>
+      <h2>登录</h2>
+      <div class="form-row">
+        <label>角色</label>
+        <div class="role-cards">
+          <button id="role-student" class="role-btn selected" data-role="student">学生</button>
+          <button id="role-teacher" class="role-btn" data-role="teacher">教师</button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="form-row" id="row-name">
+        <label>姓名</label>
+        <input id="login-name" type="text" placeholder="请输入姓名/学号" required>
+      </div>
+      <div class="form-row hidden" id="row-verify">
+        <label>验证信息</label>
+        <input id="login-verify" type="text" placeholder="教师需输入验证指令" required>
+      </div>
+      <button id="login-btn" class="primary">进入</button>
+      <div id="login-tip" class="tip hidden">请完成必填信息~</div>
+    </section>
+
+    <section id="student-section" class="hidden">
+      <div class="tabs">
+        <button data-tab="stu-ai" class="tab active">核小助</button>
+        <button data-tab="stu-assess" class="tab">学情评测中心</button>
+        <button data-tab="stu-task" class="tab">学习任务中心</button>
+        <button data-tab="stu-res" class="tab">学习资源中心</button>
+      </div>
+      <div class="panels">
+        <div id="stu-ai" class="panel active">
+          <div class="panel-header">
+            <div class="title-wrap">
+              <h3>核小助</h3>
+            </div>
+          </div>
+          <div class="coze-row card">
+            <div id="coze-chat"></div>
+          </div>
+        </div>
+        <div id="stu-assess" class="panel">
+          <div class="panel-header">
+            <h3>学情评测中心</h3>
+            <div class="actions">
+              <button id="start-diagnose" class="primary">开始诊断</button>
+            </div>
+          </div>
+          <div id="diagnose-form" class="form hidden"></div>
+          <div id="diagnose-result" class="result hidden">
+            <div class="score"></div>
+            <div class="blind"></div>
+            <div class="result-body grid-2">
+              <div class="card analysis-card">
+                <h4>错题解析</h4>
+                <div id="analysis-list" class="text"></div>
+              </div>
+              <div class="card chart-card">
+                <h4>知识点掌握度</h4>
+                <canvas id="stu-radar" height="200"></canvas>
+              </div>
+            </div>
+            <div class="links">
+              <button id="to-ai" class="primary">跳转核小助答疑错题</button>
+              <button id="to-res" class="secondary">跳转学习资源中心</button>
+            </div>
+          </div>
+        </div>
+        <div id="stu-task" class="panel">
+          <div class="panel-header">
+            <h3>学习任务中心</h3>
+            <div class="actions">
+              <button id="refresh-tasks" class="secondary">刷新任务</button>
+            </div>
+          </div>
+          <div id="stu-core-modules">
+            <div class="card task-module">
+              <div class="task-title-line">
+                <h4>任务一：自主预习——掌握细胞核的分布和数量</h4>
+                <div class="actions">
+                  <button id="btn-prep-video" class="entry-btn">“细胞核的分布及数量”微课</button>
+                </div>
+              </div>
+              <div id="content-prep-video" class="task-content hidden"></div>
+            </div>
+            <div class="card task-module task2-module">
+              <h4>任务二：合作探究——阐明细胞核的功能</h4>
+              <div class="module-decor" aria-hidden="true"></div>
+              <div class="subtasks">
+                <div class="subtask">
+                  <h5>子任务1：教师引导分析 蝾螈受精卵横缢实验</h5>
+                </div>
+                <div class="subtask">
+                  <div class="subtask-line">
+                    <h5>子任务2：自主分析 美西螈核移植 / 变形虫去核移植实验</h5>
+                    <div class="actions">
+                      <button id="btn-amoeba-page" class="entry-btn">进入变形虫去核及核移植实验网页</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="subtask">
+                  <div class="subtask-line">
+                    <h5>子任务3：NBook实践 伞藻嫁接实验设计</h5>
+                    <div class="actions">
+                      <button id="btn-algae-nbook" class="entry-btn">NBook模拟伞藻嫁接及核移植实验</button>
+                    </div>
+                  </div>
+                  <div id="content-algae-nbook" class="task-content hidden"></div>
+                </div>
+              </div>
+            </div>
+            <div class="card task-module task3-module">
+              <h4>任务三：模型建构 —— 掌握细胞核的结构</h4>
+              <div class="module-decor" aria-hidden="true"></div>
+              <div class="subtasks">
+                <div class="subtask">
+                  <div class="subtask-line">
+                    <h5>子任务1：认识模型</h5>
+                    <div class="actions">
+                      <button id="btn-3d-page" class="entry-btn">细胞核三维结构模型</button>
+                    </div>
+                  </div>
+                  <div id="content-3d-page" class="task-content hidden"></div>
+                </div>
+                <div class="subtask">
+                  <div class="subtask-line">
+                    <h5>子任务2：描述模型</h5>
+                    <div class="actions">
+                      <button id="btn-plane-structure" class="entry-btn">细胞核平面结构</button>
+                    </div>
+                  </div>
+                  <img class="model-photo" src="images/描述模型.jpg" alt="细胞核结构示意（核膜、核仁、染色质等）">
+                  <h6 class="plane-title">细胞核平面结构示意图</h6>
+                  <img class="plane-photo" src="images/细胞核平面结构.jpg" alt="细胞核平面结构示意图" style="display:none">
+                  <!-- 若占位图暂缺，请补充 images/描述模型.jpg 与 images/细胞核平面结构.jpg，尺寸自适应 -->
+                </div>
+                <div class="subtask">
+                  <div class="subtask-line">
+                    <h5>子任务3：构建模型</h5>
+                    <div class="actions">
+                      <button id="btn-to-ai" class="entry-btn">跳转至核小助模块</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="stu-task-list" class="list"></div>
+          </div>
+        <div id="stu-res" class="panel">
+          <div class="panel-header">
+            <h3>学习资源中心</h3>
+            <div class="actions">
+              <select id="res-filter">
+                <option value="all">全部</option>
+                <option value="细胞核的分布及数量">细胞核的分布及数量</option>
+                <option value="细胞核的功能">细胞核的功能</option>
+                <option value="细胞核的结构">细胞核的结构</option>
+              </select>
+            </div>
+          </div>
+          <div id="stu-res-list" class="grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="teacher-section" class="hidden">
+      <div class="tabs">
+        <button data-tab="tea-ai" class="tab active">核小助</button>
+        <button data-tab="tea-assess" class="tab">学情评测中心</button>
+        <button data-tab="tea-task" class="tab">学习任务中心</button>
+        <button data-tab="tea-res" class="tab">学习资源中心</button>
+      </div>
+      <div class="panels">
+        <div id="tea-ai" class="panel active">
+          <div class="panel-header">
+            <div class="title-wrap">
+              <img class="assistant-icon" src="images/核小助.jpg" alt="核小助">
+              <h3>核小助</h3>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h4>备课辅助</h4>
+              <textarea id="prep-input" placeholder="粘贴课标或文献内容"></textarea>
+              <button id="prep-gen" class="primary">生成教学设计</button>
+              <div id="prep-out" class="text"></div>
+            </div>
+            <div class="card">
+              <h4>考题生成</h4>
+              <textarea id="exam-input" placeholder="粘贴近三年高考题或说明"></textarea>
+              <button id="exam-gen" class="primary">生成分层题</button>
+              <div id="exam-out" class="text"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h4>答疑参考</h4>
+            <div id="faq-out" class="text"></div>
+          </div>
+        </div>
+
+        <div id="tea-assess" class="panel">
+          <div class="panel-header">
+            <h3>学情评测中心</h3>
+            <div class="actions">
+              <button id="export-report" class="primary">导出Word学情报告</button>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h4>学情看板</h4>
+              <div id="class-stats" class="text"></div>
+              <div id="tea-heatmap" class="heatmap"></div>
+              <div class="form-row">
+                <label>排序</label>
+                <select id="sort-metric">
+                  <option value="acc">按正确率排序</option>
+                  <option value="err">按错误数排序</option>
+                </select>
+              </div>
+              <canvas id="tea-bar" height="200"></canvas>
+              <canvas id="tea-pie" height="200"></canvas>
+            </div>
+            <div class="card">
+              <h4>题库管理</h4>
+              <div id="bank-list" class="list"></div>
+              <div class="form-row">
+                <input id="bank-q" type="text" placeholder="题干">
+                <select id="bank-type">
+                  <option value="判断">判断</option>
+                  <option value="填空">填空</option>
+                </select>
+                <select id="bank-dim">
+                  <option value="细胞核的分布及数量">细胞核的分布及数量</option>
+                  <option value="细胞核的功能">细胞核的功能</option>
+                  <option value="细胞核的结构">细胞核的结构</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <input id="bank-ans" type="text" placeholder="答案（判断填true/false）">
+                <input id="bank-exp" type="text" placeholder="解析">
+              </div>
+              <div class="actions">
+                <button id="bank-add" class="secondary">新增</button>
+                <button id="bank-save" class="primary">保存版本</button>
+              </div>
+            </div>
+            <div class="card suggest-card" id="tea-suggest">
+              <h4>教学建议</h4>
+              <div id="suggest-out" class="text"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tea-task" class="panel">
+          <div class="panel-header">
+            <h3>学习任务中心</h3>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h4>任务创建</h4>
+              <div class="form-row">
+                <input id="task-title" type="text" placeholder="任务标题">
+              </div>
+              <div class="form-row">
+                <select id="task-type">
+                  <option value="基础">基础</option>
+                  <option value="进阶">进阶</option>
+                  <option value="拓展">拓展</option>
+                </select>
+                <input id="task-deadline" type="date">
+              </div>
+              <textarea id="task-desc" placeholder="任务说明"></textarea>
+              <div class="actions">
+                <button id="task-create" class="primary">创建</button>
+              </div>
+            </div>
+            <div class="card">
+              <h4>任务推送与批改</h4>
+              <div class="form-row">
+                <select id="push-scope">
+                  <option value="全班">全班</option>
+                  <option value="薄弱生">薄弱生</option>
+                </select>
+                <button id="task-push" class="secondary">一键推送</button>
+              </div>
+              <div id="tea-task-list" class="list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tea-res" class="panel">
+          <div class="panel-header">
+            <h3>学习资源中心</h3>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h4>资源管理</h4>
+              <div class="form-row">
+                <input id="res-title" type="text" placeholder="资源标题">
+              </div>
+              <div class="form-row">
+                <input id="res-url" type="text" placeholder="资源链接">
+                <select id="res-dim">
+                  <option value="细胞核的分布及数量">细胞核的分布及数量</option>
+                  <option value="细胞核的功能">细胞核的功能</option>
+                  <option value="细胞核的结构">细胞核的结构</option>
+                </select>
+              </div>
+              <div class="actions">
+                <button id="res-add" class="secondary">上传/添加</button>
+              </div>
+              <div id="tea-res-list" class="list"></div>
+            </div>
+            <div class="card">
+              <h4>智能推送与统计</h4>
+              <div class="form-row">
+                <button id="res-smart-push" class="primary">基于学情一键推送</button>
+              </div>
+              <div id="res-stats" class="text"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="manuals" class="hidden">
+      <div class="modal" id="modal-stu">
+        <div class="modal-header">
+          <h3>核学通（学生版）使用手册</h3>
+          <button class="close" data-close="modal-stu">关闭</button>
+        </div>
+        <div class="modal-body" id="manual-stu-body"></div>
+      </div>
+      <div class="modal" id="modal-tea">
+        <div class="modal-header">
+          <h3>核学通（教师版）使用手册</h3>
+          <button class="close" data-close="modal-tea">关闭</button>
+        </div>
+        <div class="modal-body" id="manual-tea-body"></div>
+      </div>
+      <div class="modal" id="modal-feature">
+        <div class="modal-header">
+          <h3>模块功能清单与AI赋能亮点</h3>
+          <button class="close" data-close="modal-feature">关闭</button>
+        </div>
+        <div class="modal-body" id="feature-body"></div>
+      </div>
+    </section>
+  </main>
+
+  
+  <script src="app.js"></script>
+  <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"></script>
+</body>
+</html>
+</html>

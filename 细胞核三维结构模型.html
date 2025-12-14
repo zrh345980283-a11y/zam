@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>细胞核三维结构模型 - 高中生物</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2a3c7f);
+            color: #fff;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            text-align: center;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        .goal-tag{
+            margin-top:6px;
+            display:inline-block;
+            padding:3px 8px;
+            border-radius:12px;
+            background:#FFD54F;
+            color:#5D4037;
+            font-weight:700;
+            font-size:0.9rem;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 15px;
+            flex: 1;
+            overflow: hidden;
+            padding: 10px;
+        }
+        
+        .control-panel {
+            width: 280px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .animation-area {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .fullscreen-btn{
+            position:absolute;right:10px;top:10px;padding:8px 10px;background:#7B1FA2;color:#fff;border:none;border-radius:6px;cursor:pointer}
+        .fullscreen-btn:hover{filter:brightness(1.08)}
+        
+        #nucleus-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #7eb6ff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 5px;
+        }
+        
+        .param-control {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        .value-display {
+            font-size: 0.8rem;
+            color: #aaa;
+            text-align: right;
+        }
+        
+        .structure-info {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .structure-info p {
+            margin-bottom: 10px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 8px;
+            background-color: #4a6fc7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #5a7fd7;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+        
+        .nuclear-membrane {
+            background-color: #3a8c6e;
+        }
+        
+        .chromatin {
+            background-color: #b84a7a;
+        }
+        
+        .nucleolus {
+            background-color: #e6c35c;
+        }
+        
+        .nuclear-pore {
+            background-color: #4a8cb8;
+        }
+        
+        .transport-particle {
+            background-color: #ff6b6b;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            background-color: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.4;
+        }
+        
+        .question-panel {
+            width: 280px;
+            background: #F3E5F5;
+            border-radius: 8px;
+            padding: 12px;
+            color: #333;
+            overflow-y: auto;
+            border: 1px solid #E1BEE7;
+        }
+        .question-panel h3 {
+            margin: 0 0 10px;
+            color: #7B1FA2;
+            font-weight: 700;
+            font-size: 14px;
+            text-align: left;
+        }
+        .q-item {margin-bottom: 10px}
+        .q-title {
+            cursor: pointer;
+            color: #333;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .q-title:hover {filter: brightness(1.08)}
+        .q-answer {
+            display: none;
+            color: #7B1FA2;
+            font-size: 12px;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+        .q-item.open .q-answer {display: block}
+        .q-tip{color:#A678C0;font-size:12px;margin:0 0 8px}
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .control-panel {
+                width: auto;
+                max-height: 40vh;
+            }
+            .question-panel {
+                width: auto;
+                max-height: 40vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>细胞核三维结构模型</h1>
+        <div class="subtitle">高中生物必修一 · 分子与细胞 · 细胞核结构与功能</div>
+        <div class="goal-tag">掌握细胞核的结构</div>
+    </header>
+    
+    <div class="container">
+        <div class="control-panel">
+            <div class="section">
+                <h2>实验控制</h2>
+                <div class="param-control">
+                    <label for="nuclear-size">细胞核大小</label>
+                    <input type="range" id="nuclear-size" min="50" max="150" value="100">
+                    <div class="value-display">当前值: <span id="nuclear-size-value">100</span></div>
+                </div>
+                
+                <div class="param-control">
+                    <label for="chromatin-density">染色质密度</label>
+                    <input type="range" id="chromatin-density" min="10" max="100" value="50">
+                    <div class="value-display">当前值: <span id="chromatin-density-value">50</span></div>
+                </div>
+                
+                <div class="param-control">
+                    <label for="nuclear-pores">核孔数量</label>
+                    <input type="range" id="nuclear-pores" min="5" max="30" value="15">
+                    <div class="value-display">当前值: <span id="nuclear-pores-value">15</span></div>
+                </div>
+                
+                <div class="param-control">
+                    <label for="membrane-permeability">核膜通透性</label>
+                    <input type="range" id="membrane-permeability" min="0" max="100" value="30">
+                    <div class="value-display">当前值: <span id="membrane-permeability-value">30</span></div>
+                </div>
+                
+                <div class="param-control">
+                    <label for="particle-speed">粒子移动速度</label>
+                    <input type="range" id="particle-speed" min="1" max="10" value="3">
+                    <div class="value-display">当前值: <span id="particle-speed-value">3</span></div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="reset-btn">重置参数</button>
+                    <button id="animate-btn">启动/暂停动画</button>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>结构图例</h2>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color nuclear-membrane"></div>
+                        <span>核膜</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color chromatin"></div>
+                        <span>染色质</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color nucleolus"></div>
+                        <span>核仁</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color nuclear-pore"></div>
+                        <span>核孔</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color transport-particle"></div>
+                        <span>运输粒子</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>细胞核结构讲解</h2>
+                <div class="structure-info">
+                    <p><strong>核膜：</strong>双层膜结构，将细胞核与细胞质分开，控制物质进出细胞核。</p>
+                    <p><strong>核孔：</strong>核膜上的通道，允许特定分子（如mRNA）在细胞核与细胞质之间运输。</p>
+                    <p><strong>染色质：</strong>由DNA和蛋白质组成，是遗传信息的载体。在细胞分裂时，染色质会凝聚成染色体。</p>
+                    <p><strong>核仁：</strong>与核糖体RNA的合成以及核糖体的形成有关。</p>
+                    <p><strong>核基质：</strong>为细胞核提供结构支持，并参与DNA复制和基因表达调控。</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="animation-area">
+            <button class="fullscreen-btn" id="fullscreen-btn">全屏</button>
+            <div id="nucleus-container"></div>
+        </div>
+        <aside class="question-panel">
+            <h3>思考问题</h3>
+            <div class="q-tip">提示：点击问题可展开答案</div>
+            <div class="q-item">
+                <div class="q-title">问题1：从这个三维模型里，你能指出核膜、核仁、染色质、核孔分别对应的是哪个部分吗？</div>
+                <div class="q-answer">包裹整体的“边界”是核膜；黄色球形是核仁；红色细丝是染色质；蓝色环形是核孔。</div>
+            </div>
+            <div class="q-item">
+                <div class="q-title">问题2：观察动画里“核仁越大、核孔数量越多”的变化，这两种结构的数量关联，可能和细胞的什么活动有关？</div>
+                <div class="q-answer">核仁参与核糖体形成，核孔负责物质运输；核仁大、核孔多，说明细胞需要合成更多蛋白质，对应旺盛的生命活动（比如细胞分裂、生长）。</div>
+            </div>
+            <div class="q-item">
+                <div class="q-title">问题3：哪些物质可以通过核孔进出细胞核？</div>
+                <div class="q-answer">进入细胞核的物质：蛋白质（如 DNA 聚合酶、RNA 聚合酶）；运出细胞核的物质：RNA（如 mRNA、tRNA）、核糖体亚基等。</div>
+            </div>
+            <div class="q-item">
+                <div class="q-title">问题4：这个三维结构模型如果要更直观展示“核膜双层结构”，你觉得可以增加什么设计？</div>
+                <div class="q-answer">可以把核膜设计成“双层透明结构”，用不同颜色区分内外膜；或者添加“膜上蛋白质”的细节，体现核膜的功能特性。</div>
+            </div>
+        </aside>
+    </div>
+    
+    <footer>
+        细胞核结构模型 2025<br>
+        制作人：俞静 马智娇 夏宵雪
+    </footer>
+
+    <!-- 引入Three.js库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- 引入轨道控制器 -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+
+    <script>
+        // 获取控制元素
+        const nuclearSizeSlider = document.getElementById('nuclear-size');
+        const chromatinDensitySlider = document.getElementById('chromatin-density');
+        const nuclearPoresSlider = document.getElementById('nuclear-pores');
+        const membranePermeabilitySlider = document.getElementById('membrane-permeability');
+        const particleSpeedSlider = document.getElementById('particle-speed');
+        const resetBtn = document.getElementById('reset-btn');
+        const animateBtn = document.getElementById('animate-btn');
+        
+        // 获取显示值的元素
+        const nuclearSizeValue = document.getElementById('nuclear-size-value');
+        const chromatinDensityValue = document.getElementById('chromatin-density-value');
+        const nuclearPoresValue = document.getElementById('nuclear-pores-value');
+        const membranePermeabilityValue = document.getElementById('membrane-permeability-value');
+        const particleSpeedValue = document.getElementById('particle-speed-value');
+        
+        // 模型参数
+        let params = {
+            nuclearSize: parseInt(nuclearSizeSlider.value),
+            chromatinDensity: parseInt(chromatinDensitySlider.value),
+            nuclearPores: parseInt(nuclearPoresSlider.value),
+            membranePermeability: parseInt(membranePermeabilitySlider.value),
+            particleSpeed: parseInt(particleSpeedSlider.value),
+            animationRunning: true
+        };
+        
+        // Three.js相关变量
+        let scene, camera, renderer, controls;
+        let nucleus, nuclearMembrane, chromatin, nucleolus, nuclearPores = [], transportParticles = [];
+        
+        // 初始化Three.js场景
+        function initThreeJS() {
+            // 创建场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a2a6c);
+            
+            // 创建相机 - 确保球形显示
+            const container = document.getElementById('nucleus-container');
+            const aspectRatio = container.clientWidth / container.clientHeight;
+            
+            camera = new THREE.PerspectiveCamera(75, aspectRatio, 0.1, 1000);
+            camera.position.z = 5;
+            
+            // 创建渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            // 添加轨道控制器
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // 添加光源
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // 初始化细胞核结构
+            initializeNucleus();
+            
+            // 窗口大小调整事件
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        // 窗口大小调整处理
+        function onWindowResize() {
+            const container = document.getElementById('nucleus-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        // 初始化细胞核结构
+        function initializeNucleus() {
+            // 清除现有结构
+            if (nucleus) scene.remove(nucleus);
+            if (nucleolus) scene.remove(nucleolus);
+            nuclearPores.forEach(pore => scene.remove(pore));
+            transportParticles.forEach(particle => scene.remove(particle));
+            
+            nuclearPores = [];
+            transportParticles = [];
+            
+            // 计算实际核孔数量
+            const actualPoreCount = calculateActualPoreCount();
+            
+            // 创建细胞核组
+            nucleus = new THREE.Group();
+            
+            // 创建核膜（双层球体）
+            createNuclearMembrane();
+            
+            // 创建核孔
+            createNuclearPores(actualPoreCount);
+            
+            // 创建染色质
+            createChromatin();
+            
+            // 创建核仁
+            createNucleolus();
+            
+            // 创建运输粒子
+            createTransportParticles();
+            
+            scene.add(nucleus);
+        }
+        
+        // 计算实际核孔数量
+        function calculateActualPoreCount() {
+            const basePores = params.nuclearPores;
+            const sizeFactor = params.nuclearSize / 100;
+            return Math.max(5, Math.floor(basePores * sizeFactor));
+        }
+        
+        // 创建核膜
+        function createNuclearMembrane() {
+            const radius = params.nuclearSize / 100;
+            
+            // 外层核膜
+            const outerMembraneGeometry = new THREE.SphereGeometry(radius, 32, 32);
+            const outerMembraneMaterial = new THREE.MeshPhongMaterial({
+                color: 0x3a8c6e,
+                transparent: true,
+                opacity: 0.3,
+                wireframe: false
+            });
+            const outerMembrane = new THREE.Mesh(outerMembraneGeometry, outerMembraneMaterial);
+            nucleus.add(outerMembrane);
+            
+            // 内层核膜
+            const innerMembraneGeometry = new THREE.SphereGeometry(radius * 0.95, 32, 32);
+            const innerMembraneMaterial = new THREE.MeshPhongMaterial({
+                color: 0x2a7c5e,
+                transparent: true,
+                opacity: 0.3,
+                wireframe: false
+            });
+            const innerMembrane = new THREE.Mesh(innerMembraneGeometry, innerMembraneMaterial);
+            nucleus.add(innerMembrane);
+            
+            // 存储核膜引用
+            nuclearMembrane = { outer: outerMembrane, inner: innerMembrane };
+        }
+        
+        // 创建核孔
+        function createNuclearPores(poreCount) {
+            const radius = params.nuclearSize / 100;
+            
+            for (let i = 0; i < poreCount; i++) {
+                // 在球面上均匀分布核孔
+                const phi = Math.acos(-1 + (2 * i) / poreCount);
+                const theta = Math.sqrt(poreCount * Math.PI) * phi;
+                
+                const x = radius * Math.sin(phi) * Math.cos(theta);
+                const y = radius * Math.sin(phi) * Math.sin(theta);
+                const z = radius * Math.cos(phi);
+                
+                // 创建核孔 - 使用环形几何体，更符合实际
+                const poreGeometry = new THREE.TorusGeometry(0.04, 0.01, 8, 16);
+                const poreMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x4a8cb8,
+                    emissive: 0x1a4a7a
+                });
+                const pore = new THREE.Mesh(poreGeometry, poreMaterial);
+                
+                // 将核孔定位在球面上并朝向球心
+                pore.position.set(x, y, z);
+                
+                // 创建辅助对象来计算正确朝向
+                const helper = new THREE.Object3D();
+                helper.position.set(x, y, z);
+                helper.lookAt(0, 0, 0);
+                
+                // 将核孔的旋转设置为辅助对象的旋转
+                pore.rotation.copy(helper.rotation);
+                
+                nucleus.add(pore);
+                nuclearPores.push({
+                    mesh: pore,
+                    position: new THREE.Vector3(x, y, z),
+                    angle: new THREE.Vector2(phi, theta)
+                });
+            }
+        }
+        
+        // 创建染色质（细丝状结构）
+        function createChromatin() {
+            const radius = params.nuclearSize / 100;
+            const density = params.chromatinDensity / 100;
+            const filamentCount = Math.floor(20 * density);
+            
+            for (let i = 0; i < filamentCount; i++) {
+                // 创建染色质细丝组
+                const filament = new THREE.Group();
+                
+                // 随机起点
+                const startPhi = Math.random() * Math.PI;
+                const startTheta = Math.random() * 2 * Math.PI;
+                const startRadius = Math.random() * radius * 0.8;
+                
+                const startX = startRadius * Math.sin(startPhi) * Math.cos(startTheta);
+                const startY = startRadius * Math.sin(startPhi) * Math.sin(startTheta);
+                const startZ = startRadius * Math.cos(startPhi);
+                
+                // 创建细丝点
+                const points = [new THREE.Vector3(startX, startY, startZ)];
+                let currentPoint = points[0];
+                
+                // 生成细丝的其余点
+                const pointCount = 10 + Math.floor(Math.random() * 15);
+                for (let j = 0; j < pointCount; j++) {
+                    // 随机方向
+                    const direction = new THREE.Vector3(
+                        Math.random() - 0.5,
+                        Math.random() - 0.5,
+                        Math.random() - 0.5
+                    ).normalize();
+                    
+                    const distance = 0.05 + Math.random() * 0.1;
+                    const nextPoint = currentPoint.clone().add(direction.multiplyScalar(distance));
+                    
+                    // 检查是否在细胞核内
+                    if (nextPoint.length() < radius * 0.8) {
+                        points.push(nextPoint);
+                        currentPoint = nextPoint;
+                    }
+                }
+                
+                // 创建细丝几何体
+                const filamentGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                const filamentMaterial = new THREE.LineBasicMaterial({
+                    color: 0xb84a7a,
+                    linewidth: 2
+                });
+                const filamentLine = new THREE.Line(filamentGeometry, filamentMaterial);
+                filament.add(filamentLine);
+                
+                nucleus.add(filament);
+            }
+        }
+        
+        // 创建核仁
+        function createNucleolus() {
+            const radius = params.nuclearSize / 100;
+            
+            // 核仁大小与细胞核大小和核孔数量都相关
+            // 核孔数量越多，通常意味着细胞核越大，核仁也越大
+            const nucleolusSizeFactor = (params.nuclearSize / 100) * (params.nuclearPores / 15);
+            const nucleolusRadius = radius * 0.25 * nucleolusSizeFactor;
+            
+            const nucleolusGeometry = new THREE.SphereGeometry(nucleolusRadius, 16, 16);
+            const nucleolusMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xe6c35c,
+                emissive: 0x7a5a1a
+            });
+            nucleolus = new THREE.Mesh(nucleolusGeometry, nucleolusMaterial);
+            
+            // 将核仁放置在细胞核中心附近，但不完全在中心
+            nucleolus.position.set(
+                (Math.random() - 0.5) * radius * 0.3,
+                (Math.random() - 0.5) * radius * 0.3,
+                (Math.random() - 0.5) * radius * 0.3
+            );
+            
+            nucleus.add(nucleolus);
+        }
+        
+        // 创建运输粒子
+        function createTransportParticles() {
+            const permeability = params.membranePermeability / 100;
+            const particleCount = Math.floor(15 * permeability);
+            const radius = params.nuclearSize / 100;
+            
+            for (let i = 0; i < particleCount; i++) {
+                // 随机选择一个核孔
+                const poreIndex = Math.floor(Math.random() * nuclearPores.length);
+                const pore = nuclearPores[poreIndex];
+                
+                // 决定粒子是在核内还是核外
+                const isInside = Math.random() > 0.5;
+                
+                // 设置粒子的起始位置 - 在核孔附近
+                const startDistance = isInside ? radius * 0.9 : radius * 1.1;
+                const startPos = pore.position.clone().normalize().multiplyScalar(startDistance);
+                
+                // 设置目标位置 - 在核孔的另一侧
+                const targetDistance = isInside ? radius * 1.1 : radius * 0.9;
+                const targetPos = pore.position.clone().normalize().multiplyScalar(targetDistance);
+                
+                // 创建粒子
+                const particleGeometry = new THREE.SphereGeometry(0.03, 8, 8);
+                const particleMaterial = new THREE.MeshPhongMaterial({ 
+                    color: isInside ? 0xff6b6b : 0x4ecdc4 
+                });
+                const particle = new THREE.Mesh(particleGeometry, particleMaterial);
+                particle.position.copy(startPos);
+                
+                nucleus.add(particle);
+                transportParticles.push({
+                    mesh: particle,
+                    isInside: isInside,
+                    startPos: startPos,
+                    targetPos: targetPos,
+                    progress: Math.random(),
+                    speed: 0.005 + Math.random() * 0.01,
+                    poreIndex: poreIndex
+                });
+            }
+        }
+        
+        // 更新运输粒子
+        function updateTransportParticles() {
+            const speedFactor = params.particleSpeed / 10;
+            
+            transportParticles.forEach(particle => {
+                // 更新粒子位置
+                particle.progress += particle.speed * speedFactor;
+                
+                // 如果粒子已经到达目标位置，重置它
+                if (particle.progress >= 1) {
+                    particle.progress = 0;
+                    particle.isInside = !particle.isInside;
+                    
+                    // 重新选择核孔
+                    const poreIndex = Math.floor(Math.random() * nuclearPores.length);
+                    const pore = nuclearPores[poreIndex];
+                    
+                    // 设置新的起始位置和目标位置
+                    const radius = params.nuclearSize / 100;
+                    const startDistance = particle.isInside ? radius * 0.9 : radius * 1.1;
+                    particle.startPos = pore.position.clone().normalize().multiplyScalar(startDistance);
+                    
+                    const targetDistance = particle.isInside ? radius * 1.1 : radius * 0.9;
+                    particle.targetPos = pore.position.clone().normalize().multiplyScalar(targetDistance);
+                    
+                    particle.poreIndex = poreIndex;
+                    
+                    // 更新粒子颜色
+                    particle.mesh.material.color.set(particle.isInside ? 0xff6b6b : 0x4ecdc4);
+                }
+                
+                // 计算粒子当前位置
+                const currentPos = particle.startPos.clone().lerp(particle.targetPos, particle.progress);
+                particle.mesh.position.copy(currentPos);
+                
+                // 当粒子接近核孔时，增加亮度
+                if (particle.progress > 0.4 && particle.progress < 0.6) {
+                    particle.mesh.material.emissive.set(0x333333);
+                } else {
+                    particle.mesh.material.emissive.set(0x000000);
+                }
+            });
+        }
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (params.animationRunning) {
+                // 更新运输粒子
+                updateTransportParticles();
+                
+                // 缓慢旋转细胞核，便于观察
+                nucleus.rotation.y += 0.005;
+                
+                // 更新轨道控制器
+                controls.update();
+            }
+            
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+        
+        // 更新显示值
+        function updateDisplayValues() {
+            nuclearSizeValue.textContent = params.nuclearSize;
+            chromatinDensityValue.textContent = params.chromatinDensity;
+            nuclearPoresValue.textContent = calculateActualPoreCount();
+            membranePermeabilityValue.textContent = params.membranePermeability;
+            particleSpeedValue.textContent = params.particleSpeed;
+        }
+        
+        // 监听滑块变化
+        nuclearSizeSlider.addEventListener('input', function() {
+            params.nuclearSize = parseInt(this.value);
+            updateDisplayValues();
+            initializeNucleus();
+        });
+        
+        chromatinDensitySlider.addEventListener('input', function() {
+            params.chromatinDensity = parseInt(this.value);
+            updateDisplayValues();
+            initializeNucleus();
+        });
+        
+        nuclearPoresSlider.addEventListener('input', function() {
+            params.nuclearPores = parseInt(this.value);
+            updateDisplayValues();
+            initializeNucleus();
+        });
+        
+        membranePermeabilitySlider.addEventListener('input', function() {
+            params.membranePermeability = parseInt(this.value);
+            updateDisplayValues();
+            initializeNucleus();
+        });
+        
+        particleSpeedSlider.addEventListener('input', function() {
+            params.particleSpeed = parseInt(this.value);
+            updateDisplayValues();
+        });
+        
+        // 重置按钮
+        resetBtn.addEventListener('click', function() {
+            nuclearSizeSlider.value = 100;
+            chromatinDensitySlider.value = 50;
+            nuclearPoresSlider.value = 15;
+            membranePermeabilitySlider.value = 30;
+            particleSpeedSlider.value = 3;
+            
+            params.nuclearSize = 100;
+            params.chromatinDensity = 50;
+            params.nuclearPores = 15;
+            params.membranePermeability = 30;
+            params.particleSpeed = 3;
+            
+            updateDisplayValues();
+            initializeNucleus();
+        });
+        
+        // 动画控制按钮
+        animateBtn.addEventListener('click', function() {
+            params.animationRunning = !params.animationRunning;
+            animateBtn.textContent = params.animationRunning ? '暂停动画' : '启动动画';
+        });
+        
+        // 初始化
+        initThreeJS();
+        animate();
+        document.querySelectorAll('.question-panel .q-item .q-title').forEach(t=>{t.addEventListener('click',()=>{const item=t.parentElement;if(item.classList.contains('open')){item.classList.remove('open')}else{item.classList.add('open')}})})
+        const fsBtn=document.getElementById('fullscreen-btn');fsBtn.addEventListener('click',()=>{if(document.fullscreenElement){document.exitFullscreen();fsBtn.innerText='全屏'}else{document.documentElement.requestFullscreen().then(()=>{fsBtn.innerText='退出全屏'}).catch(()=>{})}})
+        updateDisplayValues();
+    </script>
+</body>
+</html>

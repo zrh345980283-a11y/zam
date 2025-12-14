@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>变形虫切割实验</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            overflow: hidden;
+            background-color: #1e3a5f;
+            color: #ffffff;
+        }
+
+        .container {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 左侧控制面板 */
+        .control-panel {
+            width: 320px;
+            background-color: #0f2744;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-right: 2px solid #2d4a7a;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .panel-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4fc3f7;
+        }
+
+        .step-info {
+            background-color: #1a3361;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4fc3f7;
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #4fc3f7;
+        }
+
+        .step-description {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #bbdefb;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #4fc3f7;
+            color: #0d1b2a;
+        }
+
+        .btn-primary:hover {
+            background-color: #29b6f6;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #2d4a7a;
+            color: #bbdefb;
+        }
+
+        .btn-secondary:hover {
+            background-color: #1e3a5f;
+            transform: translateY(-2px);
+        }
+
+        /* 上一步和下一步按钮使用更浅的色调 */
+        .nav-button {
+            background-color: #3a5a8a;
+            color: #ffffff;
+            border: 1px solid #4a6a9a;
+        }
+
+        .nav-button:hover {
+            background-color: #2a4a7a;
+            transform: translateY(-2px);
+        }
+
+        .nav-button:disabled {
+            background-color: #2a3a5a;
+            color: #8a9bba;
+            border: 1px solid #3a4a6a;
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .nav-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* 制作人信息 */
+        .author-info {
+            text-align: center;
+            margin-top: auto;
+            padding-top: 20px;
+            color: #bbdefb;
+            font-size: 14px;
+            border-top: 1px solid #2d4a7a;
+            padding-top: 15px;
+        }
+
+        /* 右侧实验区域 */
+        .experiment-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: #0d1b2a;
+        }
+
+        #scene-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .step-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(15, 39, 68, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 5;
+            border: 2px solid #2d4a7a;
+        }
+
+        .indicator-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4fc3f7;
+            text-align: center;
+        }
+
+        .step-dots {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #2d4a7a;
+            position: relative;
+        }
+
+        .step-dot.active {
+            background-color: #4fc3f7;
+            box-shadow: 0 0 8px #4fc3f7;
+        }
+
+        .step-dot.completed {
+            background-color: #29b6f6;
+        }
+
+        .step-dot::after {
+            content: attr(data-step);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #bbdefb;
+            white-space: nowrap;
+        }
+
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(15, 39, 68, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            max-width: 300px;
+            z-index: 5;
+            border: 2px solid #2d4a7a;
+            font-size: 14px;
+            color: #bbdefb;
+        }
+
+        .highlight {
+            color: #4fc3f7;
+            font-weight: bold;
+        }
+
+        /* 状态标签 */
+        .status-label {
+            position: absolute;
+            padding: 8px 12px;
+            background-color: rgba(15, 39, 68, 0.9);
+            border-radius: 6px;
+            font-size: 14px;
+            color: #ffffff;
+            z-index: 10;
+            border: 2px solid #4fc3f7;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .status-label.visible {
+            opacity: 1;
+        }
+
+        @media (max-width: 1200px) {
+            .control-panel {
+                width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧控制面板 -->
+        <div class="control-panel">
+            <div class="panel-title">变形虫切割实验</div>
+            
+            <div class="step-info">
+                <div class="step-title" id="current-step-title">步骤 1: 切割变形虫</div>
+                <div class="step-description" id="current-step-description">
+                    展示完整变形虫 → 动画模拟"切割"，分离为"无核部分"和"有核部分"
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-primary" id="execute-step">执行步骤</button>
+                
+                <div class="nav-buttons">
+                    <button class="btn nav-button" id="prev-step" disabled>上一步</button>
+                    <button class="btn nav-button" id="next-step">下一步</button>
+                </div>
+            </div>
+            
+            <div class="step-info" style="margin-top: 20px;">
+                <div class="step-title">实验原理</div>
+                <div class="step-description">
+                    本实验证明了细胞核控制着细胞的代谢和遗传。有核部分能正常生存，无核部分逐渐死亡。
+                    当细胞核被重新移植回无核部分后，生命机能恢复。
+                </div>
+            </div>
+            
+            <!-- 制作人信息 -->
+            <div class="author-info">
+                制作人：马智娇 俞静 夏宵雪
+            </div>
+        </div>
+        
+        <!-- 右侧实验区域 -->
+        <div class="experiment-area">
+            <!-- 3D场景容器 -->
+            <div id="scene-container"></div>
+            
+            <!-- 步骤指示器 -->
+            <div class="step-indicator">
+                <div class="indicator-title">实验进度</div>
+                <div class="step-dots">
+                    <div class="step-dot active" data-step="切割" id="step1-dot"></div>
+                    <div class="step-dot" data-step="观察" id="step2-dot"></div>
+                    <div class="step-dot" data-step="取出核" id="step3-dot"></div>
+                    <div class="step-dot" data-step="移植核" id="step4-dot"></div>
+                </div>
+            </div>
+            
+            <!-- 操作说明 -->
+            <div class="instructions">
+                <div class="highlight">操作说明：</div>
+                <div>• 鼠标左键拖拽：旋转视角</div>
+                <div>• 鼠标滚轮：缩放视角</div>
+                <div>• 点击"执行步骤"开始每个步骤的实验</div>
+            </div>
+            
+            <!-- 状态标签 -->
+            <div class="status-label" id="label-cut" style="top: 40%; left: 35%;">切割线</div>
+            <div class="status-label" id="label-nucleated" style="top: 45%; left: 65%;">有核部分</div>
+            <div class="status-label" id="label-unnucleated" style="top: 45%; left: 25%;">无核部分</div>
+            <div class="status-label" id="label-nucleus" style="top: 20%; left: 65%;">细胞核</div>
+            <div class="status-label" id="label-cytoplasm" style="top: 70%; left: 65%;">去核细胞质</div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let scene, camera, renderer;
+        let amoeba, nucleus, cutPlane;
+        let nucleatedPart, unnucleatedPart;
+        let nucleusAlone, cytoplasmAlone;
+        let currentStep = 1, isAnimating = false;
+        let animationId, controls;
+        
+        // 实验步骤数据
+        const stepData = {
+            1: {
+                title: "步骤 1: 切割变形虫",
+                description: "展示完整变形虫 → 动画模拟\"切割\"，分离为\"无核部分\"和\"有核部分\"",
+                btnText: "执行切割",
+                action: performCut
+            },
+            2: {
+                title: "步骤 2: 观察生命状态",
+                description: "无核部分：能消化但不能摄食、对刺激无反应、细胞器退化 → 死亡<br>有核部分：正常生活",
+                btnText: "开始观察",
+                action: startObservation
+            },
+            3: {
+                title: "步骤 3: 取出细胞核",
+                description: "从有核部分\"取出核\"，分离为\"去核部分\"和\"单独细胞核\"<br>细胞核：存活3小时后解体<br>去核细胞质：存活24小时后代谢停止",
+                btnText: "取出细胞核",
+                action: extractNucleus
+            },
+            4: {
+                title: "步骤 4: 移植细胞核",
+                description: "动画模拟\"植入细胞核\"到去核部分，最终呈现\"恢复正常生命活动\"",
+                btnText: "移植细胞核",
+                action: transplantNucleus
+            }
+        };
+        
+        // 初始化Three.js场景
+        function initScene() {
+            // 获取容器
+            const container = document.getElementById('scene-container');
+            
+            // 创建场景
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0d1b2a);
+            
+            // 创建相机
+            camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 5);
+            
+            // 创建渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+            
+            // 添加环境光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+            
+            // 添加平行光
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+            
+            // 添加点光源
+            const pointLight = new THREE.PointLight(0x4fc3f7, 0.5);
+            pointLight.position.set(-3, 3, 3);
+            scene.add(pointLight);
+            
+            // 创建完整变形虫
+            createAmoeba();
+            
+            // 添加轨道控制器
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 2;
+            controls.maxDistance = 10;
+            
+            // 窗口大小调整监听
+            window.addEventListener('resize', onWindowResize);
+            
+            // 开始动画循环
+            animate();
+        }
+        
+        // 创建变形虫模型
+        function createAmoeba() {
+            // 创建变形虫主体（使用球体并添加变形）
+            const geometry = new THREE.SphereGeometry(1.2, 32, 32);
+            
+            // 创建软体变形效果
+            const positions = geometry.attributes.position.array;
+            const originalPositions = [...positions];
+            
+            // 创建材质
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x4fc3f7,
+                roughness: 0.2,
+                metalness: 0.1,
+                transparent: true,
+                opacity: 0.85
+            });
+            
+            // 创建网格
+            amoeba = new THREE.Mesh(geometry, material);
+            amoeba.userData.originalPositions = originalPositions;
+            amoeba.userData.time = 0;
+            amoeba.userData.isAlive = true;
+            
+            scene.add(amoeba);
+            
+            // 创建细胞核
+            const nucleusGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+            const nucleusMaterial = new THREE.MeshStandardMaterial({
+                color: 0xff5252,
+                roughness: 0.1,
+                metalness: 0.3
+            });
+            
+            nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
+            nucleus.position.set(0.4, 0.2, 0.1);
+            amoeba.add(nucleus);
+            
+            // 创建切割平面（初始不可见）
+            const planeGeometry = new THREE.PlaneGeometry(3, 3);
+            const planeMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff5252,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.4,
+                visible: false
+            });
+            
+            cutPlane = new THREE.Mesh(planeGeometry, planeMaterial);
+            cutPlane.rotation.x = Math.PI / 2;
+            scene.add(cutPlane);
+        }
+        
+        // 更新变形虫软体效果
+        function updateAmoebaDeformation() {
+            if (!amoeba || !amoeba.userData.isAlive) return;
+            
+            const positions = amoeba.geometry.attributes.position.array;
+            const originalPositions = amoeba.userData.originalPositions;
+            const time = amoeba.userData.time;
+            
+            // 应用软体变形效果
+            for (let i = 0; i < positions.length; i += 3) {
+                const x = originalPositions[i];
+                const y = originalPositions[i + 1];
+                const z = originalPositions[i + 2];
+                
+                // 基于时间和位置添加波动
+                const wave1 = 0.05 * Math.sin(x * 8 + time * 1.5);
+                const wave2 = 0.05 * Math.sin(y * 6 + time * 1.2);
+                const wave3 = 0.05 * Math.sin(z * 4 + time * 0.8);
+                
+                // 使用中等变形程度
+                const deformationFactor = 0.5;
+                
+                positions[i] = x + (wave1 + wave2) * deformationFactor;
+                positions[i + 1] = y + (wave2 + wave3) * deformationFactor;
+                positions[i + 2] = z + (wave1 + wave3) * deformationFactor;
+            }
+            
+            amoeba.geometry.attributes.position.needsUpdate = true;
+            amoeba.userData.time += 0.05;
+        }
+        
+        // 执行切割
+        function performCut() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            // 显示切割平面和标签
+            cutPlane.material.visible = true;
+            document.getElementById('label-cut').classList.add('visible');
+            
+            // 动画：显示切割过程
+            animateCut(() => {
+                // 创建有核部分和无核部分
+                createSplitParts();
+                
+                // 移除原始变形虫
+                scene.remove(amoeba);
+                
+                // 隐藏切割平面
+                cutPlane.material.visible = false;
+                
+                // 显示标签
+                document.getElementById('label-nucleated').classList.add('visible');
+                document.getElementById('label-unnucleated').classList.add('visible');
+                document.getElementById('label-cut').classList.remove('visible');
+                
+                // 更新步骤
+                updateStep(2);
+                isAnimating = false;
+            });
+        }
+        
+        // 动画切割过程
+        function animateCut(callback) {
+            let progress = 0;
+            const duration = 1500;
+            const startTime = Date.now();
+            
+            // 使用固定切割位置和角度
+            const cutPosition = 0.5; // 固定位置：50%
+            const cutAngle = 0; // 固定角度：0°
+            
+            function animate() {
+                progress = (Date.now() - startTime) / duration;
+                
+                // 更新切割平面位置
+                const posX = (cutPosition - 0.5) * 3;
+                cutPlane.position.set(posX, 0, 0);
+                
+                const angleRad = cutAngle * Math.PI / 180;
+                cutPlane.rotation.z = angleRad;
+                
+                // 切割平面逐渐变红
+                cutPlane.material.opacity = 0.4 + progress * 0.3;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    callback();
+                }
+            }
+            
+            animate();
+        }
+        
+        // 创建切割后的两部分
+        function createSplitParts() {
+            // 创建有核部分
+            const nucleatedGeometry = new THREE.SphereGeometry(0.8, 24, 24);
+            const nucleatedMaterial = new THREE.MeshStandardMaterial({
+                color: 0x4fc3f7,
+                roughness: 0.2,
+                metalness: 0.1,
+                transparent: true,
+                opacity: 0.85
+            });
+            
+            nucleatedPart = new THREE.Mesh(nucleatedGeometry, nucleatedMaterial);
+            nucleatedPart.position.set(1.5, 0, 0);
+            nucleatedPart.userData.originalPositions = [...nucleatedGeometry.attributes.position.array];
+            nucleatedPart.userData.time = 0;
+            nucleatedPart.userData.isAlive = true;
+            nucleatedPart.userData.hasNucleus = true;
+            scene.add(nucleatedPart);
+            
+            // 创建无核部分
+            const unnucleatedGeometry = new THREE.SphereGeometry(0.8, 24, 24);
+            const unnucleatedMaterial = new THREE.MeshStandardMaterial({
+                color: 0x64b5f6,
+                roughness: 0.3,
+                metalness: 0.1,
+                transparent: true,
+                opacity: 0.85
+            });
+            
+            unnucleatedPart = new THREE.Mesh(unnucleatedGeometry, unnucleatedMaterial);
+            unnucleatedPart.position.set(-1.5, 0, 0);
+            unnucleatedPart.userData.originalPositions = [...unnucleatedGeometry.attributes.position.array];
+            unnucleatedPart.userData.time = 0;
+            unnucleatedPart.userData.isAlive = true;
+            unnucleatedPart.userData.hasNucleus = false;
+            unnucleatedPart.userData.health = 100; // 初始健康度
+            scene.add(unnucleatedPart);
+            
+            // 将细胞核添加到有核部分
+            nucleus.parent.remove(nucleus);
+            nucleatedPart.add(nucleus);
+            nucleus.position.set(0.2, 0.1, 0);
+        }
+        
+        // 开始观察
+        function startObservation() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            // 动画：无核部分逐渐死亡，有核部分正常
+            animateObservation(() => {
+                // 更新步骤
+                updateStep(3);
+                isAnimating = false;
+            });
+        }
+        
+        // 动画观察过程
+        function animateObservation(callback) {
+            let progress = 0;
+            const duration = 3000;
+            const startTime = Date.now();
+            
+            function animate() {
+                progress = (Date.now() - startTime) / duration;
+                
+                // 无核部分逐渐失去活力
+                if (unnucleatedPart) {
+                    // 颜色逐渐变暗
+                    const health = 1 - progress;
+                    unnucleatedPart.material.color.setRGB(
+                        0.39 * health,
+                        0.71 * health,
+                        0.96 * health
+                    );
+                    
+                    // 透明度逐渐降低
+                    unnucleatedPart.material.opacity = 0.85 * health;
+                    
+                    // 大小逐渐缩小
+                    const scale = 0.8 + 0.2 * (1 - health);
+                    unnucleatedPart.scale.set(scale, scale, scale);
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // 无核部分死亡
+                    if (unnucleatedPart) {
+                        unnucleatedPart.userData.isAlive = false;
+                        unnucleatedPart.material.color.setRGB(0.3, 0.3, 0.3);
+                        unnucleatedPart.material.opacity = 0.5;
+                    }
+                    callback();
+                }
+            }
+            
+            animate();
+        }
+        
+        // 取出细胞核
+        function extractNucleus() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            // 隐藏有核部分标签，显示新标签
+            document.getElementById('label-nucleated').classList.remove('visible');
+            document.getElementById('label-nucleus').classList.add('visible');
+            document.getElementById('label-cytoplasm').classList.add('visible');
+            
+            // 动画：取出细胞核
+            animateExtraction(() => {
+                // 更新步骤
+                updateStep(4);
+                isAnimating = false;
+            });
+        }
+        
+        // 动画取出细胞核过程
+        function animateExtraction(callback) {
+            // 创建单独细胞核
+            const nucleusGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+            const nucleusMaterial = new THREE.MeshStandardMaterial({
+                color: 0xff5252,
+                roughness: 0.1,
+                metalness: 0.3
+            });
+            
+            nucleusAlone = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
+            nucleusAlone.position.copy(nucleus.position).add(nucleatedPart.position);
+            nucleusAlone.userData.isAlive = true;
+            nucleusAlone.userData.health = 100;
+            scene.add(nucleusAlone);
+            
+            // 创建去核细胞质
+            const cytoplasmGeometry = new THREE.SphereGeometry(0.7, 24, 24);
+            const cytoplasmMaterial = new THREE.MeshStandardMaterial({
+                color: 0x4fc3f7,
+                roughness: 0.3,
+                metalness: 0.1,
+                transparent: true,
+                opacity: 0.85
+            });
+            
+            cytoplasmAlone = new THREE.Mesh(cytoplasmGeometry, cytoplasmMaterial);
+            cytoplasmAlone.position.copy(nucleatedPart.position);
+            cytoplasmAlone.userData.isAlive = true;
+            cytoplasmAlone.userData.health = 100;
+            scene.add(cytoplasmAlone);
+            
+            // 移除有核部分
+            scene.remove(nucleatedPart);
+            
+            // 动画：细胞核和细胞质分离
+            let progress = 0;
+            const duration = 1500;
+            const startTime = Date.now();
+            
+            // 目标位置
+            const nucleusTarget = new THREE.Vector3(2.5, 1.5, 0);
+            const cytoplasmTarget = new THREE.Vector3(2.5, -1, 0);
+            
+            function animate() {
+                progress = (Date.now() - startTime) / duration;
+                
+                // 使用缓动函数
+                const easeProgress = easeOutCubic(progress);
+                
+                // 移动细胞核
+                nucleusAlone.position.lerpVectors(
+                    nucleusAlone.position.clone(),
+                    nucleusTarget,
+                    easeProgress
+                );
+                
+                // 移动细胞质
+                cytoplasmAlone.position.lerpVectors(
+                    cytoplasmAlone.position.clone(),
+                    cytoplasmTarget,
+                    easeProgress
+                );
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // 开始细胞核和细胞质的衰变过程
+                    startDecayProcess(callback);
+                }
+            }
+            
+            animate();
+        }
+        
+        // 开始衰变过程（细胞核3小时解体，细胞质24小时代谢停止）
+        function startDecayProcess(callback) {
+            let progress = 0;
+            const duration = 2000; // 动画时间
+            const startTime = Date.now();
+            
+            function animate() {
+                progress = (Date.now() - startTime) / duration;
+                
+                // 细胞核逐渐解体
+                if (nucleusAlone) {
+                    const nucleusHealth = Math.max(0, 1 - progress * 1.5); // 细胞核解体更快
+                    nucleusAlone.scale.setScalar(nucleusHealth);
+                    nucleusAlone.material.opacity = nucleusHealth;
+                    
+                    if (progress > 0.66) {
+                        nucleusAlone.userData.isAlive = false;
+                    }
+                }
+                
+                // 细胞质逐渐代谢停止
+                if (cytoplasmAlone) {
+                    const cytoplasmHealth = Math.max(0, 1 - progress * 0.8); // 细胞质衰变较慢
+                    cytoplasmAlone.material.opacity = 0.85 * cytoplasmHealth;
+                    cytoplasmAlone.material.color.setRGB(
+                        0.31 * cytoplasmHealth,
+                        0.76 * cytoplasmHealth,
+                        0.97 * cytoplasmHealth
+                    );
+                    
+                    if (progress > 0.8) {
+                        cytoplasmAlone.userData.isAlive = false;
+                        cytoplasmAlone.material.color.setRGB(0.3, 0.3, 0.3);
+                    }
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    callback();
+                }
+            }
+            
+            animate();
+        }
+        
+        // 移植细胞核
+        function transplantNucleus() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            // 动画：移植细胞核
+            animateTransplantation(() => {
+                // 显示成功消息
+                setTimeout(() => {
+                    alert("细胞核移植成功！变形虫恢复正常生命活动。");
+                }, 500);
+                
+                isAnimating = false;
+            });
+        }
+        
+        // 动画移植细胞核过程
+        function animateTransplantation(callback) {
+            // 重新创建细胞核（如果已经解体）
+            if (!nucleusAlone || !nucleusAlone.userData.isAlive) {
+                const nucleusGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+                const nucleusMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xff5252,
+                    roughness: 0.1,
+                    metalness: 0.3
+                });
+                
+                nucleusAlone = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
+                nucleusAlone.position.set(2.5, 1.5, 0);
+                scene.add(nucleusAlone);
+            }
+            
+            // 动画：细胞核移动到细胞质
+            let progress = 0;
+            const duration = 1500;
+            const startTime = Date.now();
+            
+            // 目标位置（细胞质中心）
+            const targetPosition = cytoplasmAlone.position.clone();
+            
+            function animate() {
+                progress = (Date.now() - startTime) / duration;
+                
+                // 使用缓动函数
+                const easeProgress = easeOutCubic(progress);
+                
+                // 移动细胞核
+                nucleusAlone.position.lerpVectors(
+                    nucleusAlone.position.clone(),
+                    targetPosition,
+                    easeProgress
+                );
+                
+                // 细胞核逐渐变小（进入细胞质）
+                nucleusAlone.scale.setScalar(1 - easeProgress * 0.5);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // 在原位置创建恢复后的变形虫
+                    createRecoveredAmoebaAtPosition(targetPosition);
+                    
+                    // 移除旧组件
+                    scene.remove(nucleusAlone);
+                    scene.remove(cytoplasmAlone);
+                    
+                    // 隐藏标签
+                    document.getElementById('label-nucleus').classList.remove('visible');
+                    document.getElementById('label-cytoplasm').classList.remove('visible');
+                    
+                    callback();
+                }
+            }
+            
+            animate();
+        }
+        
+        // 在原位置创建恢复后的变形虫（逐渐放大）
+        function createRecoveredAmoebaAtPosition(position) {
+            const geometry = new THREE.SphereGeometry(1.2, 32, 32);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0x4fc3f7,
+                roughness: 0.2,
+                metalness: 0.1,
+                transparent: true,
+                opacity: 0.9
+            });
+            
+            const recoveredAmoeba = new THREE.Mesh(geometry, material);
+            recoveredAmoeba.position.copy(position);
+            recoveredAmoeba.scale.set(0.1, 0.1, 0.1); // 初始很小
+            recoveredAmoeba.userData.originalPositions = [...geometry.attributes.position.array];
+            recoveredAmoeba.userData.time = 0;
+            recoveredAmoeba.userData.isAlive = true;
+            
+            scene.add(recoveredAmoeba);
+            
+            // 添加细胞核
+            const newNucleusGeometry = new THREE.SphereGeometry(0.25, 16, 16);
+            const newNucleusMaterial = new THREE.MeshStandardMaterial({
+                color: 0xff5252,
+                roughness: 0.1,
+                metalness: 0.3
+            });
+            
+            const newNucleus = new THREE.Mesh(newNucleusGeometry, newNucleusMaterial);
+            newNucleus.position.set(0.4, 0.2, 0.1);
+            recoveredAmoeba.add(newNucleus);
+            
+            // 动画：变形虫逐渐放大
+            let scaleProgress = 0;
+            const scaleDuration = 1000;
+            const scaleStartTime = Date.now();
+            
+            function scaleAnimate() {
+                scaleProgress = (Date.now() - scaleStartTime) / scaleDuration;
+                
+                if (recoveredAmoeba) {
+                    // 使用缓动函数使放大更自然
+                    const easeProgress = easeOutCubic(scaleProgress);
+                    const scale = 0.1 + easeProgress * 0.9; // 从0.1放大到1.0
+                    recoveredAmoeba.scale.set(scale, scale, scale);
+                }
+                
+                if (scaleProgress < 1) {
+                    requestAnimationFrame(scaleAnimate);
+                } else {
+                    // 将新变形虫设置为可更新
+                    amoeba = recoveredAmoeba;
+                    nucleus = newNucleus;
+                }
+            }
+            
+            scaleAnimate();
+        }
+        
+        // 缓动函数
+        function easeOutCubic(t) {
+            return 1 - Math.pow(1 - t, 3);
+        }
+        
+        // 更新步骤
+        function updateStep(step) {
+            currentStep = step;
+            
+            // 更新步骤指示器
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`step${i}-dot`);
+                if (i < step) {
+                    dot.classList.remove('active');
+                    dot.classList.add('completed');
+                } else if (i === step) {
+                    dot.classList.add('active');
+                    dot.classList.remove('completed');
+                } else {
+                    dot.classList.remove('active', 'completed');
+                }
+            }
+            
+            // 更新步骤信息
+            const stepInfo = stepData[step];
+            document.getElementById('current-step-title').textContent = stepInfo.title;
+            document.getElementById('current-step-description').innerHTML = stepInfo.description;
+            
+            // 更新按钮文本和状态
+            document.getElementById('execute-step').textContent = stepInfo.btnText;
+            document.getElementById('prev-step').disabled = step === 1;
+            document.getElementById('next-step').disabled = false; // 总是启用下一步按钮
+            
+            // 确保执行步骤按钮在所有步骤中都是启用的
+            document.getElementById('execute-step').disabled = false;
+        }
+        
+        // 窗口大小调整处理
+        function onWindowResize() {
+            const container = document.getElementById('scene-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        // 动画循环
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            // 更新变形虫软体效果
+            updateAmoebaDeformation();
+            
+            // 更新控制器
+            if (controls) {
+                controls.update();
+            }
+            
+            // 渲染场景
+            renderer.render(scene, camera);
+        }
+        
+        // 初始化事件监听
+        function initEventListeners() {
+            // 执行步骤按钮
+            document.getElementById('execute-step').addEventListener('click', function() {
+                if (isAnimating) return;
+                
+                const stepInfo = stepData[currentStep];
+                if (stepInfo && stepInfo.action) {
+                    stepInfo.action();
+                }
+            });
+            
+            // 上一步按钮
+            document.getElementById('prev-step').addEventListener('click', function() {
+                if (isAnimating || currentStep <= 1) return;
+                updateStep(currentStep - 1);
+            });
+            
+            // 下一步按钮
+            document.getElementById('next-step').addEventListener('click', function() {
+                if (isAnimating || currentStep >= 4) return;
+                updateStep(currentStep + 1);
+            });
+        }
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initScene();
+            initEventListeners();
+            updateStep(1);
+        });
+    </script>
+</body>
+</html>
